@@ -17,7 +17,7 @@ def post_products_from_csv(
     csv_file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    db.query(models.Product).delete()
+    db.query(models.Product).filter(models.Product.resource_identifier == "csv").delete()
     if csv_file.filename.endswith("csv"):
         csvReader = csv.DictReader(codecs.iterdecode(csv_file.file, 'utf-8'))
         for row in csvReader:
@@ -49,7 +49,7 @@ def post_products_from_xml(
     xml_file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    db.query(models.Product).delete()
+    db.query(models.Product).filter(models.Product.resource_identifier == "xml").delete()
     if xml_file.filename.endswith("xml"):
         tree = ET.parse(xml_file.file)
         root = tree.getroot()[1]
