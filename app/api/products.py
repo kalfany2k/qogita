@@ -76,3 +76,10 @@ def post_products_from_xml(
                 }')
                 db.rollback()
                 continue
+
+@router.get("")
+def get_products(db: Session = Depends(get_db)):
+    products = db.query(models.Product).all()
+
+    return products
+
