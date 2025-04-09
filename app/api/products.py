@@ -2,7 +2,7 @@ from app import models, schemas
 from app.database import get_db
 import codecs
 import csv
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 import xml.etree.ElementTree as ET
@@ -59,7 +59,7 @@ def post_products_from_xml(
                 product_data = schemas.XMLInput(
                     GTIN=item.find("articleEAN").text,
                     brand=item.find("brand").text,
-                    portfolio=item.find("portfolio").text,
+                    portfolio=item.find("portfolio").text.replace("_", " ").capitalize(),
                     product_name=item.find("articleName").text,
                     volume=item.find("volume").text,
                     price=item.find("priceWithoutVat").text,
@@ -83,3 +83,25 @@ def get_products(db: Session = Depends(get_db)):
 
     return products
 
+@router.delete("/{id}")
+def remove_product(id: int, db: Session = Depends(get_db)):
+        queried_product = db.query(models.Product).filter(models.Product.id == id).first()
+
+        if not queried_product:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f'Product with identifier {id} was not deleted, resource does not exist')
+
+        try:
+            db.delete(queried_product)
+            db.commit()
+
+            return { 
+                "status_code": status.HTTP_200_OK,
+                "detail": "Product successfully deleted",
+                "product": queried_product 
+            }
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=str(e)
+            )
