@@ -52,6 +52,7 @@ def post_products_from_xml(
     db.query(models.Product).filter(models.Product.resource_identifier == "xml").delete()
     if xml_file.filename.endswith("xml"):
         tree = ET.parse(xml_file.file)
+        # Parse the second XML child of productFeed, items
         root = tree.getroot()[1]
 
         for item in root.findall("item"):
@@ -59,6 +60,7 @@ def post_products_from_xml(
                 product_data = schemas.XMLInput(
                     GTIN=item.find("articleEAN").text,
                     brand=item.find("brand").text,
+                    # Beautify input
                     portfolio=item.find("portfolio").text.replace("_", " ").capitalize(),
                     product_name=item.find("articleName").text,
                     volume=item.find("volume").text,
