@@ -1,3 +1,5 @@
+from fastapi.responses import FileResponse
+from sqlalchemy import func
 from app import models, schemas
 from app.database import get_db
 import codecs
@@ -107,3 +109,23 @@ def remove_product(id: int, db: Session = Depends(get_db)):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=str(e)
             )
+        
+@router.get("/make_csv")
+def make_csv(db: Session = Depends(get_db)):
+    query = db.query(models.Product).all()
+    array = []
+
+    for product in query:
+
+        try:
+            array.append([product.product_name, product.GTIN, product.price, product.stock_quantity])
+        except ValidationError as e:
+            print(f'ERROR:Encountered an error when creating a CSV row for {product.product_name}, {e.errors()}')
+
+    with open('temp/products.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(["name", "GTIN", "price", "stock_quantity"])
+        writer.writerows(array)
+        return FileResponse(path="temp/products.csv", filename="temp/products.csv", media_type='csv')
+        
+        

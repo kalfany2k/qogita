@@ -20,11 +20,15 @@ class Input(BaseModel):
                 return v
             else:
                 raise ValueError("GTIN can only be 8, 12, 13 or 14 digits long.")
+            
+    @field_validator('GTIN')
     def check_GTIN_numerical(cls, v):
-        if v is not None and int(v):
-            return v
-        
-        raise ValueError("GTIN can only be a numerical value.")
+        if v is not None:
+            try:
+                if int(v):
+                    return v
+            except ValueError as e:
+                raise ValueError("GTIN can only be a numerical value.")
 
 class CSVInput(Input):
     SKU: str
@@ -33,3 +37,10 @@ class XMLInput(Input):
     brand: str
     portfolio: str
     volume: int
+
+class CSVOutput(BaseModel):
+    name: str
+    GTIN: Optional[str] = None
+    price: float
+    stock_quantity: int
+    
